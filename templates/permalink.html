@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+{{ error }}
+<hr/>
+  {{post.render() | safe}}
+    {% for c in comments %}
+              <p class="comment-content">
+              {{ c.content }}
+          </p>
+          {% endfor %}
+{% endblock %}

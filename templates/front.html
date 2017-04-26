@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+  {% for p in posts %}
+    {{ p.render() | safe }}
+
+<form action="/blog/like/{{p.key().id()}}" method="POST">
+
+	
+<input type="image" value="submit" src="/static/like.png" height="40px" width="40px" alt="submit Button" onMouseOver="this.src='/static/like.png'">
+	<b>{{p.likes}}</b>
+</form>
+
+<form action="/blog/{{p.key().id()}}/newcomment" method="POST">
+    <textarea name="content"></textarea>
+    <input type="submit" value="Comment">
+</form>
+
+
+<br><br>
+  {% endfor %}
+
+{% endblock %}
