@@ -145,9 +145,6 @@ class Post(db.Model):
         return render_str("post.html", p = self)
 
 
-
-
-
 def blog_key(name = 'default'):
     return db.Key.from_path('blogs', name)
 
@@ -333,11 +330,15 @@ class DeleteComment(BlogHandler):
             self.redirect("/login")
         else:
             post = Post.get_by_id(int(post_id), parent=blog_key())
-            i = int(index)
-            post.comments.pop(i)
-            post.put()
-            time.sleep(.1)
-            self.redirect('/blog')
+            if post.uname == self.user.name:
+                i = int(index)
+                post.comments.pop(i)
+                post.put()
+                time.sleep(.1)
+                self.redirect('/blog')
+            else:
+                self.write('You are not authorized to delete this post. <a href="/blog">Go Back to blog page.')
+
 
 
 

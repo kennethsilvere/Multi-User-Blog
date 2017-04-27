@@ -9,6 +9,13 @@ body {
     color: #333;
 }
 
+.commentContent{
+	font-size: 20px;
+	color: #696969;
+	font-family: Verdana;
+	font-weight: lighter;
+}
+
 .login-area {
     font-size: 13px;
     color: gray;
@@ -115,6 +122,9 @@ input[type=submit] {
 }
 
 .post-content {
+	font-family: Verdana;
     margin-top: 5px;
+	font-size: 30px;color: #191970;
+	
 }
 
