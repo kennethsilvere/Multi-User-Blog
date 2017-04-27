@@ -138,6 +138,7 @@ class Post(db.Model):
     likes = db.IntegerProperty()
     liked_by = db.ListProperty(str)
     comments = db.StringListProperty()
+    commenter = db.StringListProperty()
 
 
     def render(self):
@@ -280,7 +281,7 @@ class likePost(BlogHandler):
                 time.sleep(.1)
                 self.redirect('/blog')
             else:
-                self.write("Can't like your own post.")
+                self.write("Can't like your own post.<a href='/blog'>Go Back</a>")
 
 
 
@@ -298,8 +299,9 @@ class NewComment(BlogHandler):
                 key = db.Key.from_path('Post', int(post_id), parent=blog_key())
                 post = Post.get_by_id(int(post_id), parent=blog_key())
                 post.comments.append(content)
+                post.commenter.append(self.user.name)
                 post.put()
-                time.sleep(.1)
+                time.sleep(.2)
                 self.redirect('/blog')
 
             else:
@@ -308,36 +310,39 @@ class NewComment(BlogHandler):
 class EditComment(BlogHandler):
 
     def post(self, post_id, index):
+        i = int(index)
+        post = Post.get_by_id(int(post_id), parent=blog_key())
         if hasattr(self.user, 'name') == False:
             self.redirect("/login")
-        else:
+        elif self.user.name == post.commenter[i]:
             content = self.request.get('content')
             if content:
-                post = Post.get_by_id(int(post_id), parent=blog_key())
-                i = int(index)
                 post.comments[i] = content
                 post.put()
-                time.sleep(.1)
+                time.sleep(.2)
                 self.redirect('/blog')
-
             else:
                 self.redirect('/blog')
+
+        else:
+            self.write("You are not allowed to edit this comment. <a href='/blog'>Go Back</a>")
 
 class DeleteComment(BlogHandler):
 
     def get(self, post_id, index):
+        i = int(index)
+        post = Post.get_by_id(int(post_id), parent=blog_key())
         if not self.user:
             self.redirect("/login")
+
+        elif self.user.name == post.commenter[i]:
+            post.comments.pop(i)
+            post.commenter.pop(i)
+            post.put()
+            time.sleep(.2)
+            self.redirect('/blog')
         else:
-            post = Post.get_by_id(int(post_id), parent=blog_key())
-            if post.uname == self.user.name:
-                i = int(index)
-                post.comments.pop(i)
-                post.put()
-                time.sleep(.1)
-                self.redirect('/blog')
-            else:
-                self.write('You are not authorized to delete this post. <a href="/blog">Go Back to blog page.')
+            self.write('You are not authorized to delete this comment. <a href="/blog">Go Back to blog page.')
 
 
 

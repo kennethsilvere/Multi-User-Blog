@@ -1,12 +1,17 @@
+
 body {
+	height: 100%;
     position: relative;
     font-family: Helvetica, Arial, sans-serif;
     font-size: 14px;
 
-    width: 800px;
+    width: 1200px;
     margin: 0 auto;
     padding: 10px;
     color: #333;
+	border-left-style: solid;
+	border-right-style: solid;
+	
 }
 
 .commentContent{

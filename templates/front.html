@@ -15,12 +15,16 @@
 <input type="image" value="submit" src="/static/like.png" height="40px" width="40px" alt="submit Button" onMouseOver="this.src='/static/like.png'">
 </form>
 
-
-
 <b>{{p.likes}}</b><br/><br/>
 
+{% if p.comments %}
+<b>Comments:</b><br/><br/>
+
+{% endif %}
+
+
 {% for c in p.comments %}
-<span class="commentContent">" {{c}} "</i></span><br/><br/>
+<span class="commentContent">" {{c}} "</span><br/><br/>
    <button onclick='document.getElementById("{{p.key().id()}}/{{p.comments.index(c)}}").style.display="block"'>Edit Comment</button>
    <a href="/blog/deletecomment/{{p.key().id()}}/{{p.comments.index(c)}}"><button>Delete Comment</button></a><br/>
 	
