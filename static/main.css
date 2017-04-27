@@ -88,6 +88,10 @@ input[type=submit] {
     text-decoration: none;
 }
 
+#newPost{
+	font-size: 25px;
+}
+
 .post + .post {
     margin-top: 15px;
 }
