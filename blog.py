@@ -29,6 +29,19 @@ def check_secure_val(secure_val):
     if secure_val == make_secure_val(val):
         return val
 
+USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
+def valid_username(username):
+    return username and USER_RE.match(username)
+
+PASS_RE = re.compile(r"^.{3,20}$")
+def valid_password(password):
+    return password and PASS_RE.match(password)
+
+EMAIL_RE  = re.compile(r'^[\S]+@[\S]+\.[\S]+$')
+def valid_email(email):
+    return not email or EMAIL_RE.match(email)
+
+
 class BlogHandler(webapp2.RequestHandler):
     def write(self, *a, **kw):
         self.response.out.write(*a, **kw)
@@ -116,9 +129,6 @@ class User(db.Model):
 
 
 
-def blog_key(name = 'default'):
-    return db.Key.from_path('blogs', name)
-
 class Post(db.Model):
     subject = db.StringProperty(required = True)
     content = db.TextProperty(required = True)
@@ -127,12 +137,19 @@ class Post(db.Model):
     uname = db.StringProperty()
     likes = db.IntegerProperty()
     liked_by = db.ListProperty(str)
-    comment = db.TextProperty()
+    comments = db.StringListProperty()
 
 
     def render(self):
         self._render_text = self.content.replace('\n', '<br>')
         return render_str("post.html", p = self)
+
+
+
+
+
+def blog_key(name = 'default'):
+    return db.Key.from_path('blogs', name)
 
 
 
@@ -270,37 +287,57 @@ class likePost(BlogHandler):
 
 
 
-class Comment(db.Model):
-    content = db.TextProperty(required=True)
-    created = db.DateTimeProperty(auto_now_add=True)
-    last_modified = db.DateTimeProperty(auto_now=True)
-    user_id = db.IntegerProperty(required=True)
-    user_name = db.TextProperty(required=True)
-
-
 class NewComment(BlogHandler):
     def get(self, post_id):
         if not self.user:
-            self.render('/login')
-        else:
-            self.render('/blog/%s' % (post_id))
-
+            self.redirect("/login")
 
     def post(self, post_id):
+        if hasattr(self.user, 'name') == False:
+            self.redirect("/login")
+        else:
+            content = self.request.get('content')
+            if content:
+                key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+                post = Post.get_by_id(int(post_id), parent=blog_key())
+                post.comments.append(content)
+                post.put()
+                time.sleep(.1)
+                self.redirect('/blog')
 
-        content = self.request.get('content')
+            else:
+                self.redirect('/blog')
 
-        user_name = self.user.name
-        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+class EditComment(BlogHandler):
 
-        c = Comment(parent=key, user_id=int(self.user.key().id()), content=content, user_name=user_name)
-        c.put()
+    def post(self, post_id, index):
+        if hasattr(self.user, 'name') == False:
+            self.redirect("/login")
+        else:
+            content = self.request.get('content')
+            if content:
+                post = Post.get_by_id(int(post_id), parent=blog_key())
+                i = int(index)
+                post.comments[i] = content
+                post.put()
+                time.sleep(.1)
+                self.redirect('/blog')
 
-        self.redirect('/blog/%s' % (post_id))
+            else:
+                self.redirect('/blog')
 
+class DeleteComment(BlogHandler):
 
-
-
+    def get(self, post_id, index):
+        if not self.user:
+            self.redirect("/login")
+        else:
+            post = Post.get_by_id(int(post_id), parent=blog_key())
+            i = int(index)
+            post.comments.pop(i)
+            post.put()
+            time.sleep(.1)
+            self.redirect('/blog')
 
 
 
@@ -317,17 +354,6 @@ class Rot13(BlogHandler):
         self.render('rot13-form.html', text = rot13)
 
 
-USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
-def valid_username(username):
-    return username and USER_RE.match(username)
-
-PASS_RE = re.compile(r"^.{3,20}$")
-def valid_password(password):
-    return password and PASS_RE.match(password)
-
-EMAIL_RE  = re.compile(r'^[\S]+@[\S]+\.[\S]+$')
-def valid_email(email):
-    return not email or EMAIL_RE.match(email)
 
 class Signup(BlogHandler):
     def get(self):
@@ -436,6 +462,8 @@ app = webapp2.WSGIApplication([('/', BlogFront),
                                ('/login', Login),
                                ('/logout', Logout),
                                ('/unit3/welcome', Unit3Welcome),
-                               ('blog/([0-9]+)/newcomment', NewComment)
+                               ('/blog/newcomment/([0-9]+)', NewComment),
+                               ('/blog/deletecomment/([0-9]+)/([0-9]+)', DeleteComment),
+                               ('/blog/editcomment/([0-9]+)/([0-9]+)', EditComment)
                                ],
                               debug=True)

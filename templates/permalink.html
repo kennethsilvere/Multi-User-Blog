@@ -3,10 +3,7 @@
 {% block content %}
 {{ error }}
 <hr/>
-  {{post.render() | safe}}
-    {% for c in comments %}
-              <p class="comment-content">
-              {{ c.content }}
-          </p>
-          {% endfor %}
+<h2>{{post.render() | safe}}</h2>
+
+<h5>{{post.comment}}</h5>
 {% endblock %}
