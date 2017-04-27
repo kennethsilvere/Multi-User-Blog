@@ -14,12 +14,24 @@ body {
 	
 }
 
+
+
 .commentContent{
 	font-size: 20px;
 	color: #696969;
 	font-family: Verdana;
 	font-weight: lighter;
 }
+
+
+.label {
+	text-align: right;
+}
+
+.error {
+	color: red;
+}
+
 
 .login-area {
     font-size: 13px;
@@ -42,11 +54,14 @@ body {
     text-decoration: underline;
 }
 
+
+
 h2 {
     font-size: 24px;
     font-weight: bold;
     margin-bottom: 20px;
 }
+
 
 .error {
     color: red;

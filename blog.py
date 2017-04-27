@@ -180,11 +180,10 @@ class NewPost(BlogHandler):
 
     def post(self):
 
-        uname = self.user.name
-
         if not self.user:
             self.redirect('/blog')
 
+        uname = self.user.name
         subject = self.request.get('subject')
         content = self.request.get('content')
 
@@ -210,8 +209,6 @@ class editPost(BlogHandler):
             self.render("editPost.html", query=query)
         else:
             self.write("You are not allowed to edit this post.<a href='/blog'>Go Back</a>")
-
-
 
 
     def post(self, post_id):

@@ -1,17 +1,6 @@
-<!DOCTYPE html>
+{% extends "base.html" %}
 
-<html>
-  <head>
-    <title>Sign Up</title>
-    <style type="text/css">
-      .label {text-align: right}
-      .error {color: red}
-    </style>
-	 <link type="text/css" rel="stylesheet" href="/static/main.css" />
-
-  </head>
-
-  <body>
+{% block content %}
     <h2>Signup</h2>
     <form method="post">
       <table>
@@ -20,7 +9,7 @@
             Username
           </td>
           <td>
-            <input type="text" name="username" value="{{username}}">
+            <input style="width:200px; height:20px;" type="text" name="username" value="{{username}}">
           </td>
           <td class="error">
             {{error_username}}
@@ -32,7 +21,7 @@
             Password
           </td>
           <td>
-            <input type="password" name="password" value="">
+            <input style="width:200px; height:20px;" type="password" name="password" value="">
           </td>
           <td class="error">
             {{error_password}}
@@ -44,7 +33,7 @@
             Verify Password
           </td>
           <td>
-            <input type="password" name="verify" value="">
+            <input style="width:200px; height:20px;" type="password" name="verify" value="">
           </td>
           <td class="error">
             {{error_verify}}
@@ -56,7 +45,7 @@
             Email (optional)
           </td>
           <td>
-            <input type="text" name="email" value="{{email}}">
+            <input style="width:200px; height:20px;" type="text" name="email" value="{{email}}">
           </td>
           <td class="error">
             {{error_email}}
@@ -73,6 +62,5 @@
 	  <br/>
 	  
 	  <a href="/">Back</a>
-  </body>
 
-</html>
+{% endblock %}

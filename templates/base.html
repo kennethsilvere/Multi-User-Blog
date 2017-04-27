@@ -10,8 +10,18 @@
     Multi User Blog
   </a>
 
+	
+{% if user %}
 	<a id="newPost" href="/blog/newpost">Create new post</a><br/><br/><br/><br/>
-  <div class="login-area">
+	
+{% else %}
+	
+	<h3 class="error">Please login to create new posts.</h3>
+	
+{% endif %}
+	
+	
+	<div class="login-area">
     {% if user %}
       {{user.name}} (<a class="login-link" href="/logout">logout</a>)
     {% else %}
