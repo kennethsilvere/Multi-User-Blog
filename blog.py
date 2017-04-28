@@ -5,7 +5,6 @@ import hashlib
 import hmac
 from string import letters
 import time
-
 import webapp2
 import jinja2
 
@@ -40,6 +39,7 @@ def valid_password(password):
 EMAIL_RE  = re.compile(r'^[\S]+@[\S]+\.[\S]+$')
 def valid_email(email):
     return not email or EMAIL_RE.match(email)
+
 
 
 class BlogHandler(webapp2.RequestHandler):
@@ -80,7 +80,7 @@ def render_post(response, post):
 
 class MainPage(BlogHandler):
   def get(self):
-      self.write('Hello, Udacity!')
+      return self.write('Hello, Udacity!')
 
 
 def make_salt(length = 5):
@@ -153,10 +153,9 @@ def blog_key(name = 'default'):
 
 class BlogFront(BlogHandler):
     def get(self):
-
         posts = greetings = Post.all().order('-created')
         user = self.user
-        self.render('front.html', posts = posts, u = user)
+        return self.render('front.html', posts = posts, u = user)
 
 class PostPage(BlogHandler):
     def get(self, post_id):
@@ -169,19 +168,19 @@ class PostPage(BlogHandler):
             self.error(404)
             return
 
-        self.render("permalink.html", post = post, comments=comments)
+        return self.render("permalink.html", post = post, comments=comments)
 
 class NewPost(BlogHandler):
     def get(self):
         if self.user:
-            self.render("newpost.html")
+            return self.render("newpost.html")
         else:
-            self.redirect("/login")
+            return self.redirect("/login")
 
     def post(self):
 
         if not self.user:
-            self.redirect('/blog')
+            return self.redirect('/blog')
 
         uname = self.user.name
         subject = self.request.get('subject')
@@ -191,45 +190,60 @@ class NewPost(BlogHandler):
         if subject and content:
             p = Post(parent = blog_key(), subject = subject, content = content, uname = uname)
             p.put()
-            self.write("Created new post. <a href='/blog'>Go to blog page.</a>")
+            return self.write("Created new post. <a href='/blog'>Go to blog page.</a>")
         else:
             error = "subject and content, please!"
-            self.render("newpost.html", subject=subject, content=content, error=error)
+            return self.render("newpost.html", subject=subject, content=content, error=error)
+
 
 
 class editPost(BlogHandler):
     def get(self, post_id):
         editedPost = Post.get_by_id(int(post_id), parent=blog_key())
+
+        if not editedPost:
+            return self.redirect("/login")
+
+
         if not self.user:
-            self.redirect("/login")
+            return self.redirect("/login")
 
         elif self.user.name == editedPost.uname:
             key = db.Key.from_path('Post', int(post_id), parent=blog_key())
             query = db.get(key)
-            self.render("editPost.html", query=query)
+            return self.render("editPost.html", query=query)
         else:
-            self.write("You are not allowed to edit this post.<a href='/blog'>Go Back</a>")
+            return self.write("You are not allowed to edit this post.<a href='/blog'>Go Back</a>")
 
 
     def post(self, post_id):
+
+        if not self.user:
+            return self.redirect("/login")
+
         editedPost = Post.get_by_id(int(post_id), parent=blog_key())
 
-        if editedPost.uname == self.user.name:
-            subject = self.request.get('subject')
-            content = self.request.get('content')
+        if editedPost is not None:
+            if editedPost.uname == self.user.name:
+                subject = self.request.get('subject')
+                content = self.request.get('content')
 
-            if subject and content:
-                editedPost.subject = subject
-                editedPost.content = content
-                editedPost.put()
-                time.sleep(.1)
-                self.redirect('/blog')
+                if subject and content:
+                    editedPost.subject = subject
+                    editedPost.content = content
+                    editedPost.put()
+                    time.sleep(.1)
+                    return self.redirect('/blog')
+                else:
+                    error = "subject and content, please!"
+                    return self.render("editPost.html", subject=subject, content=content, error=error)
+
             else:
-                error = "subject and content, please!"
-                self.render("editPost.html", subject=subject, content=content, error=error)
-
+                return self.write("You are not allowed to edit this post. <a href='/blog'>Go Back</a>")
         else:
-            self.write("You are not allowed to edit this post. <a href='/blog'>Go Back</a>")
+            return self.redirect('/blog')
+
+
 
 
 class deletePost(BlogHandler):
@@ -239,70 +253,81 @@ class deletePost(BlogHandler):
         if self.user:
             key = db.Key.from_path('Post', int(post_id), parent=blog_key())
             post = db.get(key)
-            if post.uname == self.user.name:
-                post.delete()
-                self.write("Successfully deleted that post ! <a href='/blog'>Go to blog page</a>")
-            else:
-                self.write('You are not authorized to delete this post. <a href="/blog">Go Back to blog page.</a>')
+
+            if post is not None:
+                if post.uname == self.user.name:
+                    post.delete()
+                    time.sleep(.2)
+                    return self.redirect("/")
+                else:
+                    return self.write('You are not authorized to delete this post. <a href="/blog">Go Back to blog page.</a>')
 
         else:
-            self.redirect("/login")
+            return self.redirect("/login")
 
 
 class likePost(BlogHandler):
     def get(self, post_id):
         if not self.user:
-            self.redirect("/login")
+            return self.redirect("/login")
 
     def post(self, post_id):
         if hasattr(self.user, 'name') == False:
-            self.redirect("/login")
+            return self.redirect("/login")
 
         else:
             key = db.Key.from_path('Post', int(post_id), parent=blog_key())
             post = db.get(key)
-            if post.likes == None:
-                post.likes=0
-            uname= post.uname
-            logged_user = self.user.name
-            if logged_user in post.liked_by:
-                post.likes += -1
-                post.liked_by.remove(logged_user)
-                post.put()
-                time.sleep(.1)
-                self.redirect('/blog')
-            elif uname != logged_user:
-                post.likes += 1
-                post.liked_by.append(logged_user)
-                post.put()
-                time.sleep(.1)
-                self.redirect('/blog')
+            if post is not None:
+
+                if post.likes == None:
+                    post.likes=0
+                uname= post.uname
+                logged_user = self.user.name
+                if logged_user in post.liked_by:
+                    post.likes += -1
+                    post.liked_by.remove(logged_user)
+                    post.put()
+                    time.sleep(.1)
+                    return self.redirect('/blog')
+                elif uname != logged_user:
+                    post.likes += 1
+                    post.liked_by.append(logged_user)
+                    post.put()
+                    time.sleep(.1)
+                    return self.redirect('/blog')
+                else:
+                    return self.write("Can't like your own post.<a href='/blog'>Go Back</a>")
+
             else:
-                self.write("Can't like your own post.<a href='/blog'>Go Back</a>")
+                return self.write("Can't like your own post.<a href='/blog'>Go Back</a>")
 
 
 
 class NewComment(BlogHandler):
     def get(self, post_id):
         if not self.user:
-            self.redirect("/login")
+            return self.redirect("/login")
 
     def post(self, post_id):
-        if hasattr(self.user, 'name') == False:
-            self.redirect("/login")
+        if not self.user:
+            return self.redirect("/login")
         else:
             content = self.request.get('content')
             if content:
                 key = db.Key.from_path('Post', int(post_id), parent=blog_key())
                 post = Post.get_by_id(int(post_id), parent=blog_key())
-                post.comments.append(content)
-                post.commenter.append(self.user.name)
-                post.put()
-                time.sleep(.2)
-                self.redirect('/blog')
+                if post is not None:
+                    post.comments.append(content)
+                    post.commenter.append(self.user.name)
+                    post.put()
+                    time.sleep(.2)
+                    return self.redirect('/blog')
+                else:
+                    return self.redirect('/blog')
 
             else:
-                self.redirect('/blog')
+                return self.redirect('/blog')
 
 class EditComment(BlogHandler):
 
@@ -310,19 +335,25 @@ class EditComment(BlogHandler):
         i = int(index)
         post = Post.get_by_id(int(post_id), parent=blog_key())
         if hasattr(self.user, 'name') == False:
-            self.redirect("/login")
+            return self.redirect("/login")
         elif self.user.name == post.commenter[i]:
             content = self.request.get('content')
             if content:
-                post.comments[i] = content
-                post.put()
-                time.sleep(.2)
-                self.redirect('/blog')
+                if post is not None:
+                    if post.comments[i]:
+                        post.comments[i] = content
+                        post.put()
+                        time.sleep(.2)
+                        return self.redirect('/blog')
+                    else:
+                        return self.redirect('/blog')
+                else:
+                    return self.redirect('/blog')
             else:
-                self.redirect('/blog')
+                return self.redirect('/blog')
 
         else:
-            self.write("You are not allowed to edit this comment. <a href='/blog'>Go Back</a>")
+            return self.write("You are not allowed to edit this comment. <a href='/blog'>Go Back</a>")
 
 class DeleteComment(BlogHandler):
 
@@ -330,23 +361,29 @@ class DeleteComment(BlogHandler):
         i = int(index)
         post = Post.get_by_id(int(post_id), parent=blog_key())
         if not self.user:
-            self.redirect("/login")
+            return self.redirect("/login")
 
         elif self.user.name == post.commenter[i]:
-            post.comments.pop(i)
-            post.commenter.pop(i)
-            post.put()
-            time.sleep(.2)
-            self.redirect('/blog')
+            if post is not None:
+                if post.comments[i] and post.commenter[i]:
+                    post.comments.pop(i)
+                    post.commenter.pop(i)
+                    post.put()
+                    time.sleep(.2)
+                    return self.redirect('/blog')
+                else:
+                    return self.redirect('/blog')
+            else:
+                return self.redirect("/blog")
         else:
-            self.write('You are not authorized to delete this comment. <a href="/blog">Go Back to blog page.')
+            return self.write('You are not authorized to delete this comment. <a href="/blog">Go Back to blog page.')
 
 
 
 
 class Rot13(BlogHandler):
     def get(self):
-        self.render('rot13-form.html')
+        return self.render('rot13-form.html')
 
     def post(self):
         rot13 = ''
@@ -354,13 +391,13 @@ class Rot13(BlogHandler):
         if text:
             rot13 = text.encode('rot13')
 
-        self.render('rot13-form.html', text = rot13)
+            return self.render('rot13-form.html', text = rot13)
 
 
 
 class Signup(BlogHandler):
     def get(self):
-        self.render("signup-form.html")
+        return self.render("signup-form.html")
 
     def post(self):
         have_error = False
@@ -389,9 +426,9 @@ class Signup(BlogHandler):
             have_error = True
 
         if have_error:
-            self.render('signup-form.html', **params)
+            return self.render('signup-form.html', **params)
         else:
-            self.done()
+            return self.done()
 
     def done(self, *a, **kw):
         raise NotImplementedError
@@ -407,17 +444,17 @@ class Register(Signup):
         u = User.by_name(self.username)
         if u:
             msg = 'That user already exists.'
-            self.render('signup-form.html', error_username = msg)
+            return self.render('signup-form.html', error_username = msg)
         else:
             u = User.register(self.username, self.password, self.email)
             u.put()
 
             self.login(u)
-            self.write("Signed up as "+ self.username + "<br/><a href='/blog'>Go to Blog Page</a>")
+            return self.write("Signed up as "+ self.username + "<br/><a href='/blog'>Go to Blog Page</a>")
 
 class Login(BlogHandler):
     def get(self):
-        self.render('login-form.html')
+        return self.render('login-form.html')
 
     def post(self):
         username = self.request.get('username')
@@ -426,30 +463,30 @@ class Login(BlogHandler):
         u = User.login(username, password)
         if u:
             self.login(u)
-            self.write("Logged in! <br/><a href='/blog'>Go to Blog Page</a>")
+            return self.write("Logged in! <br/><a href='/blog'>Go to Blog Page</a>")
         else:
             msg = 'Invalid login'
-            self.render('login-form.html', error = msg)
+            return self.render('login-form.html', error = msg)
 
 class Logout(BlogHandler):
     def get(self):
         self.logout()
-        self.write("Logged out !<br/><a href='/blog'>Go to Blog Page</a>")
+        return self.write("Logged out !<br/><a href='/blog'>Go to Blog Page</a>")
 
 class Unit3Welcome(BlogHandler):
     def get(self):
         if self.user:
-            self.render('welcome.html', username = self.user.name)
+            return self.render('welcome.html', username = self.user.name)
         else:
-            self.redirect('/signup')
+            return self.redirect('/signup')
 
 class Welcome(BlogHandler):
     def get(self):
         username = self.request.get('username')
         if valid_username(username):
-            self.render('welcome.html', username = username)
+            return self.render('welcome.html', username = username)
         else:
-            self.redirect('/unit2/signup')
+            return self.redirect('/unit2/signup')
 
 app = webapp2.WSGIApplication([('/', BlogFront),
                                ('/unit2/rot13', Rot13),

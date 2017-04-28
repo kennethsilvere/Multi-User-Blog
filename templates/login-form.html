@@ -1,17 +1,6 @@
-<!DOCTYPE html>
+{% extends "base.html" %}
 
-<html>
-  <head>
-    <title>Login</title>
-    <style type="text/css">
-      .label {text-align: right}
-      .error {color: red}
-    </style>
- <link type="text/css" rel="stylesheet" href="/static/main.css" />
-
-  </head>
-
-  <body>
+{% block content %}
     <h2>Login</h2>
     <form method="post">
       <table>
@@ -40,7 +29,10 @@
 
       <input type="submit" value="Login">
     </form>
-  </body>
 <br><br>
-	  <a href="/">Back</a>
-</html>
+<a href="/">Back</a>
+  
+{% endblock %}
+
+	  
+
